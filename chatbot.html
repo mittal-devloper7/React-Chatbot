@@ -2,6 +2,7 @@
 <html>
   <head>
     <title>ChatBot</title>
+    <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <div class="js-container"></div>
@@ -13,6 +14,7 @@
     <script type="text/babel">
       function ChatInput({ chatmessage, setChatMessages }) {
         const [inputText, setInputText] = React.useState("");
+        const [isLoading, setIsLoading] = React.useState(false);
 
         function saveInput(event) {
           setInputText(event.target.value);
@@ -21,36 +23,53 @@
         function sendMessage() {
           if (!inputText.trim()) return;
 
-          const response = Chatbot.getResponse(inputText);
+          const userInput = inputText;
 
-          setChatMessages([
-            ...chatmessage,
+          setChatMessages((prev) => [
+            ...prev,
             {
-              message: inputText,
+              message: userInput,
               sender: "user",
-              id: crypto.randomUUID(),
-            },
-            {
-              message: response,
-              sender: "bot",
               id: crypto.randomUUID(),
             },
           ]);
 
           setInputText("");
+          setIsLoading(true);
+
+          setTimeout(() => {
+            const response = Chatbot.getResponse(userInput);
+
+            setChatMessages((prev) => [
+              ...prev,
+              {
+                message: response,
+                sender: "bot",
+                id: crypto.randomUUID(),
+              },
+            ]);
+
+            setIsLoading(false);
+          }, 1000);
         }
 
         return (
-          <>
+          <div className="chat-input-container">
             <input
               type="text"
               placeholder="Type your message here..."
               onChange={saveInput}
               value={inputText}
               size="30"
+              className="chat-input"
             />
-            <button onClick={sendMessage}>Send</button>
-          </>
+
+            <button onClick={sendMessage} className="send-button">
+              Send
+            </button>
+
+            {isLoading && <div className="loader"></div>}
+          </div>
         );
       }
 
@@ -66,17 +85,25 @@
         //   );
         // }
         return (
-          <div>
-            {sender === "bot" && <img src="robot.png" width="50" height="50" />}
-            {message}
-            {sender === "user" && <img src="user.png" width="50" height="50" />}
+          <div
+            className={
+              sender === "user" ? "chat-message-user" : "chat-message-bot"
+            }
+          >
+            {sender === "bot" && (
+              <img src="robot.png" className="chat-message-profile" />
+            )}
+            <div className="message">{message}</div>
+            {sender === "user" && (
+              <img src="user.png" className="chat-message-profile" />
+            )}
           </div>
         );
       }
 
       function ChatMessages({ chatmessage }) {
         return (
-          <>
+          <div className="chat-messages-conatiner">
             {chatmessage.map((chatmessage) => {
               return (
                 <ChatMessage
@@ -86,7 +113,7 @@
                 />
               );
             })}
-          </>
+          </div>
         );
       }
 
@@ -115,13 +142,14 @@
         ]);
         const [chatmessage, setChatMessages] = array;
         return (
-          <>
+          <div className="app-container">
+            <h1>ChatBot</h1>
+            <ChatMessages chatmessage={chatmessage} />
             <ChatInput
               chatmessage={chatmessage}
               setChatMessages={setChatMessages}
             />
-            <ChatMessages chatmessage={chatmessage} />
-          </>
+          </div>
         );
       }
 
